@@ -12459,7 +12459,8 @@ __resources__["/__builtin__/libs/cocos2d/actions/ActionInterval.js"] = {meta: {m
 
 var util = require('util'),
     act = require('./Action'),
-    ccp = require('geometry').ccp;
+    geo = require('geometry'),
+    ccp = geo.ccp;
 
 var ActionInterval = act.FiniteTimeAction.extend(/** @lends cocos.actions.ActionInterval# */{
     /**
@@ -12906,39 +12907,40 @@ var Animate = ActionInterval.extend(/** @lends cocos.actions.Animate# */{
 });
 
 var MoveTo = ActionInterval.extend(/** @lends cocos.actions.MoveTo# */{
-        delta: null,
-        startPosition: null,
-        endPosition: null,
-    
-        /**
-         * @class Animates moving a cocos.nodes.Node object to a another point.
-         *
-         * @memberOf cocos.actions
-         * @constructs
-         * @extends cocos.actions.ActionInterval
-         *
-         * @opt {Float} duration Number of seconds to run action for
-         * @opt {geometry.Point} position Destination poisition
-         */
-        init: function (opts) {
-            MoveTo.superclass.init.call(this, opts);
-    
-            this.set('endPosition', util.copy(opts.position));
-        },
-    
-        startWithTarget: function (target) {
-            MoveTo.superclass.startWithTarget.call(this, target);
-    
-            this.set('startPosition', util.copy(target.get('position')));
-            this.set('delta', geo.ccpSub(this.get('endPosition'), this.get('startPosition')));
-        },
-    
-        update: function (t) {
-            var startPosition = this.get('startPosition'),
-                delta = this.get('delta');
-            this.target.set('position', ccp(startPosition.x + delta.x * t, startPosition.y + delta.y * t));
-        }
-    });
+    delta: null,
+    startPosition: null,
+    endPosition: null,
+
+    /**
+     * @class Animates moving a cocos.nodes.Node object to a another point.
+     *
+     * @memberOf cocos.actions
+     * @constructs
+     * @extends cocos.actions.ActionInterval
+     *
+     * @opt {Float} duration Number of seconds to run action for
+     * @opt {geometry.Point} position Destination poisition
+     */
+    init: function (opts) {
+        MoveTo.superclass.init.call(this, opts);
+
+        this.set('endPosition', util.copy(opts.position));
+    },
+
+    startWithTarget: function (target) {
+        MoveTo.superclass.startWithTarget.call(this, target);
+
+        this.set('startPosition', util.copy(target.get('position')));
+        this.set('delta', geo.ccpSub(this.get('endPosition'), this.get('startPosition')));
+    },
+
+    update: function (t) {
+        var startPosition = this.get('startPosition'),
+            delta = this.get('delta');
+        this.target.set('position', ccp(startPosition.x + delta.x * t, startPosition.y + delta.y * t));
+    }
+});
+
 
 exports.ActionInterval = ActionInterval;
 exports.ScaleTo = ScaleTo;
@@ -20629,7 +20631,9 @@ engine = (function() {
         sceneList = {}, sceneListCount = 0,
         currentScene,
         currentMap,
-        testArea = $('#qunit-test-area');
+        tileSize = 48,
+        testArea = $('#qunit-test-area'),
+        Texture2D = require('cocos2d/Texture2D').Texture2D,
         cocos = require('cocos2d'),
         geo = require('geometry');
     
@@ -20663,7 +20667,7 @@ engine = (function() {
     that.createScene = function(sceneName) {
         sceneList[sceneName] = cocos.nodes.Scene.create();
         sceneListCount++;
-        //$('.currentScene', testArea).remove();
+        //$('.currentS1cene', testArea).remove();
         testArea.append('<div class="scene" id="' + sceneName + '"></div>')
         var sceneArea = $('#' + sceneName);
         sceneArea.css({'width': '100%', 'height': '100%'});
@@ -20698,6 +20702,36 @@ engine = (function() {
         currentMap.runAction(doAction);
     };
     
+    that.putEntity = function(xPos, yPos, spriteName) {
+        var spriteTexture = Texture2D.create({file: module.dirname + "/sprites/kayak.png"}),
+            spriteFrames = [], framesCount = 10, tileCenterOffset = Math.round(tileSize / 2);
+        
+        for (var i = 0; i < framesCount; i++) {
+            spriteFrames.push(cocos.SpriteFrame.create({
+                texture: spriteTexture,
+                rect: geo.rectMake(tileSize * i, 0, tileSize * (i + 1), tileSize)
+            }));
+        }
+        var sprite = cocos.nodes.Sprite.create({frame: spriteFrames[0]});
+        sprite.set('position', geo.ccp(xPos * tileSize + tileCenterOffset, yPos * tileSize + tileCenterOffset));
+        currentScene.addChild({child: sprite});
+        
+        sprite.moveTo = function(x, y, duration, callback) {
+            var position = geo.ccp(x * tileSize + tileCenterOffset, y * tileSize + tileCenterOffset),
+                moveAction = moveToWithStop.create({duration: (duration / 1000), position: position});
+            moveAction.set('runCallback', callback);
+            sprite.runAction(moveAction);
+        }
+        
+        //sprite.set('anchorPoint', geo.ccp(0.5, 0.5));
+        //var animation = cocos.Animation.create({frames: spriteFrames, delay: 0.2}),
+        //    animate = cocos.actions.Animate.create({animation: animation, restoreOriginalFrame: false});
+        //
+        //sprite.runAction(cocos.actions.RepeatForever.create(animate));
+        
+        return sprite;
+    }
+    
     var moveToWithStop = cocos.actions.MoveTo.extend({
         stop: function() {
             if (typeof this.runCallback == 'function') {
@@ -20705,7 +20739,7 @@ engine = (function() {
             }
             moveToWithStop.superclass.stop.call(this);
         }
-    })
+    });
     
     return that;
 })();
@@ -20798,22 +20832,22 @@ q.module("Viewport", {
     }
 });
 
-//q.asyncTest('Move viewport', 1, function() {
-//    engine.prepareWorldData(48,48, function(){
-//        engine.createScene('scene1');
-//        engine.showScene('scene1');
-//        var startTime;
-//        setTimeout(function(){
-//            startTime = new Date();
-//            engine.moveViewportTo(600, 600, 3000, function(){
-//                var stopTime = new Date();
-//                var delta = stopTime.getTime() - startTime.getTime();
-//                q.ok(delta < 3020 && delta > 2980, "Animation was performed in resonable time 2980 < " + delta + " < 3020 ");
-//                q.start();
-//            });
-//        }, 500);
-//    });
-//});
+q.asyncTest('Move viewport', 1, function() {
+    engine.prepareWorldData(48,48, function(){
+        engine.createScene('scene1');
+        engine.showScene('scene1');
+        var startTime;
+        setTimeout(function(){
+            startTime = new Date();
+            engine.moveViewportTo(600, 600, 3000, function(){
+                var stopTime = new Date();
+                var delta = stopTime.getTime() - startTime.getTime();
+                q.ok(delta < 3020 && delta > 2980, "Animation was performed in resonable time 2980 < " + delta + " < 3020 ");
+                q.start();
+            });
+        }, 500);
+    });
+});
 
 q.asyncTest('Switch scene', 1, function() {
     engine.prepareWorldData(48,48, function(){
@@ -20831,55 +20865,55 @@ q.asyncTest('Switch scene', 1, function() {
     });
 });
 
-//q.asyncTest('Moving non-animated sprite on map', 1, function() {
-//    engine.prepareWorldData(48,48, function(){
-//        engine.createScene('scene1');
-//        engine.showScene('scene1');
-//        var startTime;
-//        var entity = engine.putEntity(0, 0, 'player');
-//        setTimeout(function(){
-//            startTime = new Date();
-//            entity.moveTo(15, 10, 10000, function() {
-//                var stopTime = new Date();
-//                var delta = (stopTime.getTime() - startTime.getTime());
-//                q.ok( 9900 < delta && delta < 10100, "Sprite moved in about 10 seconds (" + delta + ")");
-//                q.start();
-//            });
-//        }, 500);
-//    });
-//});
-//
-//q.asyncTest('Moving 50 non-animated sprites on map', 50, function() {
-//    engine.prepareWorldData(48,48, function(){
-//        engine.createScene('scene1');
-//        engine.showScene('scene1');
-//        var i,j, entities = [];
-//        for(i = 0; i< 10; i++){
-//            for(j=0; j<5; j++){
-//                entities.push({
-//                    start:{x:i*2-(j%2),y:(j%2)*10+j},
-//                    finish:{x:i*2-(j%2), y:((j+1)%2)*10+j}
-//                });
-//            }
-//        }
-//        setTimeout(function(){
-//            for( n=0; n < entities.length; n++){
-//                (function(){
-//                    var startTime;
-//                    var entity = engine.putEntity(entities[n].start.x, entities[n].start.y, 'player');
-//                    startTime = new Date();
-//                    entity.moveTo(entities[n].finish.x, entities[n].finish.y, 5000, function() {
-//                        var stopTime = new Date();
-//                        var delta = (stopTime.getTime() - startTime.getTime());
-//                        q.ok( 4900 < delta && delta < 5100, "Sprite moved in about 5 seconds (" + delta + ")");
-//                    });
-//                })();
-//            }
-//            setTimeout(function(){q.start();}, 6000);
-//        }, 1000);
-//    });
-//});
-//
+q.asyncTest('Moving non-animated sprite on map', 1, function() {
+    engine.prepareWorldData(48,48, function(){
+        engine.createScene('scene1');
+        engine.showScene('scene1');
+        var startTime;
+        var entity = engine.putEntity(0, 0, 'player');
+        setTimeout(function(){
+            startTime = new Date();
+            entity.moveTo(15, 10, 10000, function() {
+                var stopTime = new Date();
+                var delta = (stopTime.getTime() - startTime.getTime());
+                q.ok( 9900 < delta && delta < 10100, "Sprite moved in about 10 seconds (" + delta + ")");
+                q.start();
+            });
+        }, 500);
+    });
+});
+
+q.asyncTest('Moving 50 non-animated sprites on map', 50, function() {
+    engine.prepareWorldData(48,48, function(){
+        engine.createScene('scene1');
+        engine.showScene('scene1');
+        var i,j, entities = [];
+        for(i = 0; i< 10; i++){
+            for(j=0; j<5; j++){
+                entities.push({
+                    start:{x:i*2-(j%2),y:(j%2)*10+j},
+                    finish:{x:i*2-(j%2), y:((j+1)%2)*10+j}
+                });
+            }
+        }
+        setTimeout(function(){
+            for( n=0; n < entities.length; n++){
+                (function(){
+                    var startTime;
+                    var entity = engine.putEntity(entities[n].start.x, entities[n].start.y, 'player');
+                    startTime = new Date();
+                    entity.moveTo(entities[n].finish.x, entities[n].finish.y, 5000, function() {
+                        var stopTime = new Date();
+                        var delta = (stopTime.getTime() - startTime.getTime());
+                        q.ok( 4900 < delta && delta < 5100, "Sprite moved in about 5 seconds (" + delta + ")");
+                    });
+                })();
+            }
+            setTimeout(function(){q.start();}, 6000);
+        }, 1000);
+    });
+});
+
 //q.asyncTest('Moving aminated sprite on map', function(){
 //    engine.prepareWorldData(48, 48, function() {
 //        engine.createScene('scene1');
@@ -21162,7 +21196,8 @@ q.asyncTest('Switch scene', 1, function() {
 //        }, 500);
 //    }, 1000);
 //});
-}};/*globals module exports resource require window Module __main_module_name__ __resources__*/
+}};
+__resources__["/sprites/kayak.png"] = {meta: {mimetype: "image/png"}, data: __imageResource("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAAwCAMAAADQBniuAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACdQTFRFijQEAIQAzk0G1OPl8WMV87eC///b+qIT////KiEnb8LdAAAA/////y3SCAAAAA10Uk5T////////////////AD3oIoYAAAS+SURBVHja7JvpdqswDIQF1I0v4v2f91q22RICMyScblJ72h9lIo0+25ilMnj8uRBvgUP3cOgeDt3DoXs4dA+H7uHQPRy6x3eH3nW/uQe/2x0BXWTVFaQvswRtopDrjJxYl441d+7gJN3psq7xgQue/EU+Wll15ZjjLOnAqbNK8tbj40LzIQD0uWBpP9DVryMVdIpXNCvj8XLoHQ39okFyOfSO5EEL3gUdmunymUJY5m1aUZoGhj4pQMFc1JEgTmN7ZQShDglm6MmuSAsCMQUlmJ3iZW34iPdTffuDPnOYpRRKIGkKdKKuwhxRlKIaZJDEOyPHvVX7lYoHBeP6nqrhhknHCKaB0hBlbRlHlnf5/BfCP+tvM6jiBDOSgWFuCnii16IA5jEWhlWDdDj5NL+4IK/WEw9iqhOCWUOUtWiWlGlb+wFCD0G5LKkJtELBs0E+3hI0h/u44tIgEs3SENjuKj1MlAfYKOdj1axmbsc+dGk0NUDVoKNJqhVilFQFOEgMdioqlwV3y0TFCHS8Qa/OYeohVBv4OCEFRn10DhoZqo/miUC2JUlkPwLe39KtwCuOzMeJXzHfYEtiHSjFCEpdJwFqo5hWXCGswIwU5BPECMyQhfGH8+ET6De1b2IwVkkQfBZmRcAUzXg8Ngkn6lWDUhcdBQPOkFNICGNN+GLN+Vg0a5P5FnSbg7dbEpHQs4aCniIoMtOzDbWy0AxdOtqmYa6KgV6s4wx1TAELwlgTDr0419FIRKBbkrTwJlV3vLzX/ioDfdbI2xUxfTVnihryMmoBnRNG6Fq7yymuE9yV1eSGHJ4ORuOKndPThU7++LQ6MNBvnCQfbEvKkaJefdmkJYvKs8pyVO/I44OSJI0snGEpq2EE2lCnkCnJOHrjDvVuGu1pS/akWdvQ81pyawnoLSnBFdF82A6OLcruXWZNSBpb5Y4vDavgRkAfbVwmWGhCHr3dzkxPHu28Jm3Ya5ZsbUfbcg6hoOdeKQMdTBL7fL9M6KLuNRD0KoCvQ7IieSeg1xQU9NlHGrv9LvRH4wj0JKnBQG8VlpStWVAsSd9nJ3xRj5qOEMDQLZIVHHpRBGRLtuEjNaPvdxf34bBZ8nA30qB/WHDQtShgSQgtpkjQiw+2qEmDP5yzRyFVELD7z1IkxEwvgha/o7Eqy8DuQMeMy91dwnP9TbuMFoVeN58w9OFroA/Yk6aRoZ6DHqG5fg99eB/05QNiqlV5I9CiRKpLlZZiyBc1iQjNOksHbQMKdPyOdRGIrtrxZvP7xjdflSB5GPQyb5HVvdz915pEOB/t5dDbhQB56CtSJy4MvRofdHh8/gWV9T7oqzcJyBQzQmQbN23HT/hgX50xEaVZZ4GoLxhyKfJGPF5jfte4PCzuJ3qlRdLi0DtGcRbgWeh3b4oBszArlFhNsqDjoL/i4/nyvpKQzHFJ7BfQSR8n3pEjTwj3WZC93KhQMkW++ooXmd8zLq/2arERACUG/RQQGuA56PxqQr4GPAk64OrrCh/Qe++711PzToAn8i3ee385iSy2AP1P8PHivzVNs9aDnLpfGa9Dd9RL6n8B+tA76J/XD/+v1T8YDt2hezh0D4fu4dA9HLqHQ/dw6B7fJ/4LMACHoBr9A4m77AAAAABJRU5ErkJggg==")};/*globals module exports resource require window Module __main_module_name__ __resources__*/
 /*jslint undef: true, strict: true, white: true, newcap: true, browser: true, indent: 4 */
 "use strict";
 

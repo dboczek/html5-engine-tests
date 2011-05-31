@@ -92,7 +92,6 @@ engine = (function() {
         
         sprite.moveTo = function(x, y, duration, callback) {
             var position = geo.ccp(x * tileSize + tileCenterOffset, y * tileSize + tileCenterOffset),
-                //moveAction = cocos.actions.RotateBy.create({duration: (duration / 1000), angle: 360});
                 moveAction = moveToWithStop.create({duration: (duration / 1000), position: position});
             moveAction.set('runCallback', callback);
             sprite.runAction(moveAction);
