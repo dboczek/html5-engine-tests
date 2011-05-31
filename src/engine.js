@@ -14,7 +14,8 @@ engine = (function() {
         engineTest = cocos.nodes.Layer.extend({
             init: function() {
                 engineTest.superclass.init.call(this);
-                var s = cocos.Director.get('sharedDirector').get('winSize');
+                var director = cocos.Director.get('sharedDirector');
+                var s = director.get('winSize');
                 var label = cocos.nodes.Label.create({string: 'Test', fontName: 'Arial', fontSize: 76});
                 this.addChild({child: label, z: 1});
                 label.set('position', geo.ccp(s.width / 2, s.height / 2));
@@ -45,6 +46,7 @@ engine = (function() {
     that.showScene = function(sceneName) {
         var director = cocos.Director.get('sharedDirector');
         director.attachInView($('#' + sceneName)[0]);
+        director.set('displayFPS', true);
         
         currentScene = sceneList[sceneName];
         currentScene.addChild({child: engineTest.create()});
