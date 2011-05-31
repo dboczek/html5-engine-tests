@@ -29,40 +29,40 @@ q.module("Viewport", {
 //    });
 //});
 
-q.asyncTest('Switch scene', 1, function() {
+//q.asyncTest('Switch scene', 1, function() {
+//    engine.prepareWorldData(48,48, function(){
+//        engine.createScene('scene1');
+//        engine.showScene('scene1');
+//        engine.createScene('scene2');
+//        setTimeout(function(){
+//            var startTime = new Date();
+//            engine.showScene('scene2', function(){
+//                var stopTime = new Date();
+//                q.ok((stopTime.getTime() - startTime.getTime()) < 1000, 'Render time: ' + (stopTime.getTime() - startTime.getTime()));
+//                q.start();
+//            });
+//        }, 500);
+//    });
+//});
+
+q.asyncTest('Moving non-animated sprite on map', 1, function() {
     engine.prepareWorldData(48,48, function(){
         engine.createScene('scene1');
         engine.showScene('scene1');
-        engine.createScene('scene2');
+        var startTime;
+        var entity = engine.putEntity(0, 0, 'player');
         setTimeout(function(){
-            var startTime = new Date();
-            engine.showScene('scene2', function(){
+            startTime = new Date();
+            entity.moveTo(15, 10, 10000, function() {
                 var stopTime = new Date();
-                q.ok((stopTime.getTime() - startTime.getTime()) < 1000, 'Render time: ' + (stopTime.getTime() - startTime.getTime()));
+                var delta = (stopTime.getTime() - startTime.getTime());
+                q.ok( 9900 < delta && delta < 10100, "Sprite moved in about 10 seconds (" + delta + ")");
                 q.start();
             });
         }, 500);
     });
 });
 
-//q.asyncTest('Moving non-animated sprite on map', 1, function() {
-//    engine.prepareWorldData(48,48, function(){
-//        engine.createScene('scene1');
-//        engine.showScene('scene1');
-//        var startTime;
-//        var entity = engine.putEntity(0, 0, 'player');
-//        setTimeout(function(){
-//            startTime = new Date();
-//            entity.moveTo(15, 10, 10000, function() {
-//                var stopTime = new Date();
-//                var delta = (stopTime.getTime() - startTime.getTime());
-//                q.ok( 9900 < delta && delta < 10100, "Sprite moved in about 10 seconds (" + delta + ")");
-//                q.start();
-//            });
-//        }, 500);
-//    });
-//});
-//
 //q.asyncTest('Moving 50 non-animated sprites on map', 50, function() {
 //    engine.prepareWorldData(48,48, function(){
 //        engine.createScene('scene1');

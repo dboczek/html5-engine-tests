@@ -5,7 +5,9 @@ engine = (function() {
         sceneList = {}, sceneListCount = 0,
         currentScene,
         currentMap,
-        testArea = $('#qunit-test-area');
+        tileSize = 48,
+        testArea = $('#qunit-test-area'),
+        Texture2D = require('cocos2d/Texture2D').Texture2D,
         cocos = require('cocos2d'),
         geo = require('geometry');
     
@@ -39,7 +41,7 @@ engine = (function() {
     that.createScene = function(sceneName) {
         sceneList[sceneName] = cocos.nodes.Scene.create();
         sceneListCount++;
-        //$('.currentScene', testArea).remove();
+        //$('.currentS1cene', testArea).remove();
         testArea.append('<div class="scene" id="' + sceneName + '"></div>')
         var sceneArea = $('#' + sceneName);
         sceneArea.css({'width': '100%', 'height': '100%'});
@@ -74,6 +76,37 @@ engine = (function() {
         currentMap.runAction(doAction);
     };
     
+    that.putEntity = function(xPos, yPos, spriteName) {
+        var spriteTexture = Texture2D.create({file: module.dirname + "/sprites/kayak.png"}),
+            spriteFrames = [], framesCount = 10, tileCenterOffset = Math.round(tileSize / 2);
+        
+        for (var i = 0; i < framesCount; i++) {
+            spriteFrames.push(cocos.SpriteFrame.create({
+                texture: spriteTexture,
+                rect: geo.rectMake(tileSize * i, 0, tileSize * (i + 1), tileSize)
+            }));
+        }
+        var sprite = cocos.nodes.Sprite.create({frame: spriteFrames[0]});
+        sprite.set('position', geo.ccp(xPos * tileSize + tileCenterOffset, yPos * tileSize + tileCenterOffset));
+        currentScene.addChild({child: sprite});
+        
+        sprite.moveTo = function(x, y, duration, callback) {
+            var position = geo.ccp(x * tileSize + tileCenterOffset, y * tileSize + tileCenterOffset),
+                //moveAction = cocos.actions.RotateBy.create({duration: (duration / 1000), angle: 360});
+                moveAction = moveToWithStop.create({duration: (duration / 1000), position: position});
+            moveAction.set('runCallback', callback);
+            sprite.runAction(moveAction);
+        }
+        
+        //sprite.set('anchorPoint', geo.ccp(0.5, 0.5));
+        //var animation = cocos.Animation.create({frames: spriteFrames, delay: 0.2}),
+        //    animate = cocos.actions.Animate.create({animation: animation, restoreOriginalFrame: false});
+        //
+        //sprite.runAction(cocos.actions.RepeatForever.create(animate));
+        
+        return sprite;
+    }
+    
     var moveToWithStop = cocos.actions.MoveTo.extend({
         stop: function() {
             if (typeof this.runCallback == 'function') {
@@ -81,7 +114,7 @@ engine = (function() {
             }
             moveToWithStop.superclass.stop.call(this);
         }
-    })
+    });
     
     return that;
 })();
