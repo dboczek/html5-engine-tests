@@ -2,7 +2,7 @@
 engine = (function() {
     var that = {},
         engineTest,
-        sceneList = {},
+        sceneList = {}, sceneListCount = 0,
         currentScene,
         currentMap,
         testArea = $('#qunit-test-area');
@@ -24,13 +24,13 @@ engine = (function() {
     };
     
     that.destroyViewport = function() {
-        testArea.empty();
-        cocos.Director.get('sharedDirector').replaceScene(currentScene);
+        //testArea.empty();
+        //cocos.Director.get('sharedDirector').replaceScene(currentScene);
     };
     
     that.prepareWorldData = function(xTiles, yTiles, callback) {
         //currentMap = cocos.nodes.TMXTiledMap.create({file: module.dirname + "/maps/orthogonal-test1.tmx"});
-        currentMap = cocos.nodes.TMXTiledMap.create({file: module.dirname + "/maps/untitled.tmx"});
+        currentMap = cocos.nodes.TMXTiledMap.create({file: module.dirname + "/maps/large48.tmx"});
         if (typeof callback == 'function') {
             callback();
         }
@@ -38,20 +38,34 @@ engine = (function() {
     
     that.createScene = function(sceneName) {
         sceneList[sceneName] = cocos.nodes.Scene.create();
-        testArea.append('<div id="' + sceneName + '"></div>')
+        sceneListCount++;
+        //$('.currentScene', testArea).remove();
+        testArea.append('<div class="scene" id="' + sceneName + '"></div>')
         var sceneArea = $('#' + sceneName);
         sceneArea.css({'width': '100%', 'height': '100%'});
     };
     
-    that.showScene = function(sceneName) {
+    that.showScene = function(sceneName, callback) {
         var director = cocos.Director.get('sharedDirector');
         director.attachInView($('#' + sceneName)[0]);
-        director.set('displayFPS', true);
+        //director.set('displayFPS', true);
+        
+        var label = cocos.nodes.Label.create({string: sceneName, fontName: 'Arial', fontSize: 24});
+        label.set('position', geo.ccp(100, 100));
         
         currentScene = sceneList[sceneName];
         currentScene.addChild({child: engineTest.create()});
         currentScene.addChild({child: currentMap, z: 0, tag: 1});
-        director.runWithScene(currentScene);
+        currentScene.addChild({child: label, z: 2});
+        if (sceneListCount > 1) {
+            $('.scene', testArea).not('#' + sceneName).remove();
+            director.replaceScene(currentScene);
+        } else {
+            director.runWithScene(currentScene);
+        }
+        if (typeof callback == 'function') {
+            callback();
+        }
     };
     
     that.moveViewportTo = function(x, y, duration, callback) {

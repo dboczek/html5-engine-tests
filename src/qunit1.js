@@ -12,36 +12,35 @@ q.module("Viewport", {
     }
 });
 
-q.asyncTest('Move viewport', 1, function() {
-    engine.prepareWorldData(48,48, function(){
-        engine.createScene('scene1');
-        engine.showScene('scene1');
-        var startTime;
-        setTimeout(function(){
-            startTime = new Date();
-            engine.moveViewportTo(600, 600, 3000, function(){
-                var stopTime = new Date();
-                var delta = stopTime.getTime() - startTime.getTime();
-                q.ok(delta < 3020 && delta > 2980, "Animation was performed in resonable time 2980 < " + delta + " < 3020 ");
-                q.start();
-            });
-        }, 500);
-    });
-});
+//q.asyncTest('Move viewport', 1, function() {
+//    engine.prepareWorldData(48,48, function(){
+//        engine.createScene('scene1');
+//        engine.showScene('scene1');
+//        var startTime;
+//        setTimeout(function(){
+//            startTime = new Date();
+//            engine.moveViewportTo(600, 600, 3000, function(){
+//                var stopTime = new Date();
+//                var delta = stopTime.getTime() - startTime.getTime();
+//                q.ok(delta < 3020 && delta > 2980, "Animation was performed in resonable time 2980 < " + delta + " < 3020 ");
+//                q.start();
+//            });
+//        }, 500);
+//    });
+//});
 
 q.asyncTest('Switch scene', 1, function() {
     engine.prepareWorldData(48,48, function(){
         engine.createScene('scene1');
         engine.showScene('scene1');
-        //engine.createScene('scene2');
+        engine.createScene('scene2');
         setTimeout(function(){
             var startTime = new Date();
-            //engine.showScene('scene2', function(){
-            //    var stopTime = new Date();
-            //    q.ok((stopTime.getTime() - startTime.getTime()) < 1000, 'Render time: ' + (stopTime.getTime() - startTime.getTime()));
-            //    q.start();
-            //});
-            q.start();
+            engine.showScene('scene2', function(){
+                var stopTime = new Date();
+                q.ok((stopTime.getTime() - startTime.getTime()) < 1000, 'Render time: ' + (stopTime.getTime() - startTime.getTime()));
+                q.start();
+            });
         }, 500);
     });
 });
