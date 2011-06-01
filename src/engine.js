@@ -11,6 +11,8 @@ engine = (function() {
         Texture2D = require('cocos2d/Texture2D').Texture2D,
         cocos = require('cocos2d'),
         geo = require('geometry');
+        
+    that.tileSize = tileSize;
     
     that.initViewport = function(pixelsWidth, pixelsHeight) {
         testArea.css({'width': pixelsWidth, 'height': pixelsHeight});
@@ -38,6 +40,43 @@ engine = (function() {
             callback();
         }
     };
+
+    that.prepareWaterWorldData = function(xTiles, yTiles, callback) {
+        var spriteTexture = Texture2D.create({file: module.dirname + "/maps/img/tiles2.jpg"}),
+            spriteFrames = [], framesCount = 8, tileCenterOffset = Math.round(that.tileSize / 2),
+            entities = [], sprite;
+        
+        currentMap = cocos.nodes.TMXTiledMap.create({file: module.dirname + "/maps/empty.tmx"});
+        
+        // Prepare animation frames
+        for (var i = 0; i < framesCount; i++) {
+            spriteFrames.push(cocos.SpriteFrame.create({
+                texture: spriteTexture,
+                rect: geo.rectMake(
+                    (tileSize + tilePadding) * i, (tileSize + tilePadding) * 12, // x, y
+                    tileSize + tilePadding, tileSize // sizex, sizey
+                )
+            }));
+        }
+        
+        for (var yPos = 0; yPos < yTiles; yPos++) {
+            for (var xPos = 0; xPos < xTiles; xPos++) {
+                sprite = cocos.nodes.Sprite.create({frame: spriteFrames[0]});
+                sprite.set('position', geo.ccp(xPos * tileSize + tileCenterOffset, yPos * tileSize + tileCenterOffset));
+                var animation = cocos.Animation.create({frames: spriteFrames, delay: 0.2}),
+                    animate = cocos.actions.Animate.create({animation: animation, restoreOriginalFrame: false});
+                sprite.runAction(cocos.actions.RepeatForever.create(animate));
+                entities.push(sprite);
+                //currentScene.addChild({child: sprite});
+            }
+        }
+        
+        that.worldData = entities;
+        
+        if (typeof callback == 'function') {
+            callback();
+        }
+    };
     
     that.createScene = function(sceneName) {
         sceneList[sceneName] = cocos.nodes.Scene.create();
@@ -60,6 +99,13 @@ engine = (function() {
         currentScene.addChild({child: engineTest.create()});
         currentScene.addChild({child: currentMap, z: 0, tag: 1});
         currentScene.addChild({child: label, z: 2});
+        
+        if (that.worldData != undefined) {
+            for (var i = 0; i < that.worldData.length; i++) {
+                currentScene.addChild({child: that.worldData[i]});
+            }
+            that.worldData = undefined;
+        }
         if (sceneListCount > 1) {
             $('.scene', testArea).not('#' + sceneName).remove();
             director.replaceScene(currentScene);
