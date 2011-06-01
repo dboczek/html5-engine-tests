@@ -94,61 +94,61 @@ q.asyncTest('Moving 50 non-animated sprites on map', 50, function() {
     });
 });
 
-//q.asyncTest('Moving aminated sprite on map', function(){
-//    engine.prepareWorldData(48, 48, function() {
-//        engine.createScene('scene1');
-//        engine.showScene('scene1');
-//        setTimeout(function() {
-//            var startTime;
-//            var entity = engine.putEntity(1, 1, 'player');
-//            startTime = new Date();
-//            entity.playAnimation();
-//            entity.moveTo(1, 8, 5000, function() {
-//                entity.rotate(-90, 1000, function() {
-//                    entity.moveTo(8,8, 5000, function() {
-//                        var stopTime = new Date();
-//                        var delta = (stopTime.getTime() - startTime.getTime());
-//                        q.ok( 10900 < delta && delta < 11100, "Animated sprite moved in about 11 seconds (" + delta + ")");
-//                        q.start();
-//                    })
-//                });
-//            });
-//        }, 1000);
-//    });
-//});
-//
-//q.asyncTest('Moving 50 aminated sprites on map', 50, function() {
-//    engine.prepareWorldData(48,48, function(){
-//        engine.createScene('scene1');
-//        engine.showScene('scene1');
-//        var i,j, entities = [];
-//        for(i = 0; i< 10; i++){
-//            for(j=0; j<5; j++){
-//                entities.push({
-//                    start:{x:i*2-(j%2),y:(j%2)*10+j},
-//                    finish:{x:i*2-(j%2), y:((j+1)%2)*10+j}
-//                });
-//            }
-//        }
-//        setTimeout(function(){
-//            for( n=0; n < entities.length; n++){
-//                (function(){
-//                    var startTime;
-//                    var entity = engine.putEntity(entities[n].start.x, entities[n].start.y, 'player');
-//                    entity.playAnimation();
-//                    startTime = new Date();
-//                    entity.moveTo(entities[n].finish.x, entities[n].finish.y, 5000, function() {
-//                        var stopTime = new Date();
-//                        var delta = (stopTime.getTime() - startTime.getTime());
-//                        q.ok( 4900 < delta && delta < 5100, "Animated sprite moved in about 5 seconds (" + delta + ")");
-//                    });
-//                })();
-//            }
-//            setTimeout(function(){q.start();}, 6000);
-//        }, 1000);
-//    });
-//});
-//
+q.asyncTest('Moving aminated sprite on map', function(){
+    engine.prepareWorldData(48, 48, function() {
+        engine.createScene('scene1');
+        engine.showScene('scene1');
+        setTimeout(function() {
+            var startTime;
+            var entity = engine.putEntity(1, 1, 'player');
+            startTime = new Date();
+            entity.playAnimation();
+            entity.moveTo(1, 8, 5000, function() {
+                entity.rotate(-90, 1000, function() {
+                    entity.moveTo(8,8, 5000, function() {
+                        var stopTime = new Date();
+                        var delta = (stopTime.getTime() - startTime.getTime());
+                        q.ok( 10900 < delta && delta < 11100, "Animated sprite moved in about 11 seconds (" + delta + ")");
+                        q.start();
+                    })
+                });
+            });
+        }, 1000);
+    });
+});
+
+q.asyncTest('Moving 50 aminated sprites on map', 50, function() {
+    engine.prepareWorldData(48,48, function(){
+        engine.createScene('scene1');
+        engine.showScene('scene1');
+        var i,j, entities = [];
+        for(i = 0; i< 10; i++){
+            for(j=0; j<5; j++){
+                entities.push({
+                    start:{x:i*2-(j%2),y:(j%2)*10+j},
+                    finish:{x:i*2-(j%2), y:((j+1)%2)*10+j}
+                });
+            }
+        }
+        setTimeout(function(){
+            for( n=0; n < entities.length; n++){
+                (function(){
+                    var startTime;
+                    var entity = engine.putEntity(entities[n].start.x, entities[n].start.y, 'player');
+                    entity.playAnimation();
+                    startTime = new Date();
+                    entity.moveTo(entities[n].finish.x, entities[n].finish.y, 5000, function() {
+                        var stopTime = new Date();
+                        var delta = (stopTime.getTime() - startTime.getTime());
+                        q.ok( 4900 < delta && delta < 5100, "Animated sprite moved in about 5 seconds (" + delta + ")");
+                    });
+                })();
+            }
+            setTimeout(function(){q.start();}, 6000);
+        }, 1000);
+    });
+});
+
 //q.asyncTest('Moving 50 aminated sprites on animated map', 50, function() {
 //    engine.prepareWaterWorldData(48,48, function(){
 //        engine.createScene('scene1');

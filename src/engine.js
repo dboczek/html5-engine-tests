@@ -6,6 +6,7 @@ engine = (function() {
         currentScene,
         currentMap,
         tileSize = 48,
+        tilePadding = 2,
         testArea = $('#qunit-test-area'),
         Texture2D = require('cocos2d/Texture2D').Texture2D,
         cocos = require('cocos2d'),
@@ -80,12 +81,18 @@ engine = (function() {
         var spriteTexture = Texture2D.create({file: module.dirname + "/sprites/kayak.png"}),
             spriteFrames = [], framesCount = 10, tileCenterOffset = Math.round(tileSize / 2);
         
+        // Prepare animation frames
         for (var i = 0; i < framesCount; i++) {
             spriteFrames.push(cocos.SpriteFrame.create({
                 texture: spriteTexture,
-                rect: geo.rectMake(tileSize * i, 0, tileSize * (i + 1), tileSize)
+                rect: geo.rectMake(
+                    (tileSize + tilePadding) * i, 0, // x, y
+                    tileSize + tilePadding, tileSize // sizex, sizey
+                )
             }));
         }
+        
+        // Prepare one sprite
         var sprite = cocos.nodes.Sprite.create({frame: spriteFrames[0]});
         sprite.set('position', geo.ccp(xPos * tileSize + tileCenterOffset, yPos * tileSize + tileCenterOffset));
         currentScene.addChild({child: sprite});
@@ -93,15 +100,24 @@ engine = (function() {
         sprite.moveTo = function(x, y, duration, callback) {
             var position = geo.ccp(x * tileSize + tileCenterOffset, y * tileSize + tileCenterOffset),
                 moveAction = moveToWithStop.create({duration: (duration / 1000), position: position});
+
             moveAction.set('runCallback', callback);
             sprite.runAction(moveAction);
         }
         
-        //sprite.set('anchorPoint', geo.ccp(0.5, 0.5));
-        //var animation = cocos.Animation.create({frames: spriteFrames, delay: 0.2}),
-        //    animate = cocos.actions.Animate.create({animation: animation, restoreOriginalFrame: false});
-        //
-        //sprite.runAction(cocos.actions.RepeatForever.create(animate));
+        sprite.playAnimation = function() {
+            var animation = cocos.Animation.create({frames: spriteFrames, delay: 0.2}),
+                animate = cocos.actions.Animate.create({animation: animation, restoreOriginalFrame: false});
+
+            sprite.runAction(cocos.actions.RepeatForever.create(animate));
+        }
+        
+        sprite.rotate = function(angle, duration, callback) {
+            var rotation = rotateByWithStop.create({duration: (duration / 1000), angle: angle});
+            rotation.set('runCallback', callback);
+            sprite.set('anchorPoint', geo.ccp(0.5, 0.5));
+            sprite.runAction(rotation);
+        }
         
         return sprite;
     }
@@ -112,6 +128,15 @@ engine = (function() {
                 this.runCallback();
             }
             moveToWithStop.superclass.stop.call(this);
+        }
+    });
+    
+    var rotateByWithStop = cocos.actions.RotateBy.extend({
+        stop: function() {
+            if (typeof this.runCallback == 'function') {
+                this.runCallback();
+            }
+            rotateByWithStop.superclass.stop.call(this);
         }
     });
     
