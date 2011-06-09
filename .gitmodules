@@ -1,0 +1,3 @@
+[submodule "resources/cocos2d-javascript"]
+	path = resources/cocos2d-javascript
+	url = git://github.com/dboczek/cocos2d-javascript.git
