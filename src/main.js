@@ -4,5 +4,6 @@ var cocos = require('cocos2d'),
     geo = require('geometry');
     
 require('./jquery');
-require('./qunit1');
-
+q = require('qunit'),
+engine = require('./engine');
+require('./tests');

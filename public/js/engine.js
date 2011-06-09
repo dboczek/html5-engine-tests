@@ -285,4 +285,3 @@ var engine = (function() {
     return that;
 }());
 
-module.exports = engine;
