@@ -4,9 +4,7 @@
     <script type="text/javascript">
     $(function() {
         var engines = {
-                'crafty': 'enginetest_crafty.html?filter=',
-                'cocos2d': 'build/index.html?filter='/*,
-                'jGen': 'enginetest_jgen.html?filter='*/
+                'crafty': 'enginetest_crafty.html?filter='
             },
             tests = [
                 'Move viewport',
@@ -26,12 +24,12 @@
             list = $('#tests'), i, j, k, v, listTag, tag = '', href;
         
         for (i = 0; i < tests.length; i++) {
-            tag = '<br />';
+            tag = '';
             $.each(engines, function(engineName, engineUrl) {
                 href = engineUrl + tests[i];
-                tag += '* <a href="' + href + '">' + engineName + '</a> ';
+                tag += '<a href="' + href + '">' + tests[i] + '</a> ';
             });
-            list.append('<li>' + tests[i] + tag + '</li>');
+            list.append('<li>' + tag + '</li>');
         }
         
     });
