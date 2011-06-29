@@ -85,6 +85,17 @@ var engine = (function() {
             callback();
         }
     };
+    
+    that.prepareCustomWorldData = function(xTiles, yTiles, map, callback) {
+        if(xTiles != 48 || yTiles != 48){
+            throw "Missing tmx map fixture for size: " + xTiles + "x" + yTiles;
+        }
+        //currentMap = cocos.nodes.TMXTiledMap.create({file: module.dirname + "/maps/orthogonal-test1.tmx"});
+        currentMap = cocos.nodes.TMXTiledMap.create({file: module.dirname + "/maps/"+map+".tmx"});
+        if (typeof callback === 'function') {
+            callback();
+        }
+    };
 
     that.prepareWaterWorldData = function(xTiles, yTiles, callback) {
         var spriteTexture = Texture2D.create({file: module.dirname + "/maps/img/tiles2.jpg"}),
@@ -281,13 +292,13 @@ var engine = (function() {
         return sprite;
     };
     
-    that.putText = function(text){
+    that.putTextInCanvas = function(text){
         var label = cocos.nodes.Label.create({
             string: text.text,
             fontName: text.properites['font-family'],
             fontSize: parseInt(text.properites['font-size'], 10)
         });
-        this.addChild({child: label, z: 1});
+        currentScene.addChild({child: label, z: 1});
         label.set('position', geo.ccp(text.position.x, text.position.y));
     };
     return that;
