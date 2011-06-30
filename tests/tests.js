@@ -1,10 +1,33 @@
 q.module("Viewport", {
     setup: function(){
-        engine.initViewport(1000, 700); // in pixels
+       engine.initViewport(1000, 700); // in pixels
+       engine.FPS(false);
     },
     teardown: function(){
         engine.destroyViewport();
     }
+});
+
+
+q.asyncTest('Move 3 viewports', 3, function() {
+    engine.prepareWorldData(48,48, function() {
+        engine.createScene('scene1');
+        // FIXME Creates layers with content but position and sizes setting does not work.
+        engine.createViewIn('scene1', 3, 2, 107, 75, 'view1');
+        engine.createViewIn('scene1', 5, 101, 100, 75, 'view2');
+        engine.showScene('scene1');
+        var startTime;
+        // FIXME Add assertions for other views.
+        setTimeout(function(){
+            startTime = new Date();
+            engine.moveViewportTo(600, 600, 3000, function(){
+                var stopTime = new Date();
+                var delta = stopTime.getTime() - startTime.getTime();
+                q.ok(delta < 3020 && delta > 2980, "Animation was performed in resonable time 2980 < " + delta + " < 3020 ");
+                q.start();
+            });
+        }, 500);
+    });
 });
 
 q.asyncTest('Move viewport', 1, function() {
@@ -340,6 +363,7 @@ q.asyncTest('Rotate 2 large objects over map', 2, function() {
         }, 1000);
     })
 });
+
 q.asyncTest('Show texts', 3, function() {
     var theFont = 'Arial',
         fontSize = '12px',

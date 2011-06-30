@@ -3,7 +3,6 @@
 var engine = (function() {
     "use strict";
     var that = {},
-        engineTest,
         sceneList = {}, 
         sceneListCount = 0,
         currentScene,
@@ -12,11 +11,15 @@ var engine = (function() {
         tileSize = 48,
         tilePadding = 2,
         testArea = $('#qunit-test-area'),
+        views={},
+        viewport,
         Texture2D = require('cocos2d/Texture2D').Texture2D,
         cocos = require('cocos2d'),
         geo = require('geometry'),
         viewportWidth,
         viewportHeight,
+        isRunning = false,
+        director = cocos.Director.get('sharedDirector'),
         moveToWithStop = cocos.actions.MoveTo.extend({
             stop: function() {
                 if (typeof this.runCallback === 'function') {
@@ -33,23 +36,38 @@ var engine = (function() {
                 rotateByWithStop.superclass.stop.call(this);
             }
         });
-        
     that.tileSize = tileSize;
     
+    that.FPS = function(visible){
+        director.set('displayFPS', visible);
+    };
+    
     that.initViewport = function(pixelsWidth, pixelsHeight) {
-        testArea.css({'width': pixelsWidth, 'height': pixelsHeight});
+        viewport = testArea.css({'width': pixelsWidth, 'height': pixelsHeight})[0];
         viewportWidth = pixelsWidth;
         viewportHeight = pixelsHeight;
-        engineTest = cocos.nodes.Layer.extend({
-            init: function() {
-                engineTest.superclass.init.call(this);
-                var director = cocos.Director.get('sharedDirector'),
-                    s = director.get('winSize'),
-                    label = cocos.nodes.Label.create({string: 'Test', fontName: 'Arial', fontSize: 76});
-                this.addChild({child: label, z: 1});
-                label.set('position', geo.ccp(s.width / 2, s.height / 2));
-            }
-        });
+        director.attachInView(viewport);
+    };
+    
+
+    that.createViewIn = function(sceneName, x, y, width, height, id) {
+        var viewLayer;
+        if(arguments.length == 6) {
+            viewLayer = cocos.nodes.Node.create({
+                contentSize: geo.sizeMake(width, height),
+                position: geo.ccp(x, y)
+            });
+            // FIXME Setting position and clipping does not work at all
+            sceneList[sceneName].views[id] = viewLayer;
+            sceneList[sceneName].addChild(viewLayer);
+            sceneList[sceneName].views[id].addChild({child: currentMap});
+            sceneList[sceneName].reorderChild({child: sceneList[sceneName].views[id], z: 10});
+        } else {
+            viewLayer = cocos.nodes.Node.create();
+            sceneList[sceneName].views = {};
+            sceneList[sceneName].views['mainView'] = viewLayer;
+            sceneList[sceneName].addChild(viewLayer);
+        }
     };
     
     that.destroyViewport = function() {
@@ -133,40 +151,30 @@ var engine = (function() {
     };
     
     that.createScene = function(sceneName) {
-        testArea.append('<div class="scene" id="' + sceneName + '"></div>');
-        var sceneArea = $('#' + sceneName),
-            director = cocos.Director.get('sharedDirector');
-        sceneArea.css({'width': viewportWidth + 'px', 'height': viewportHeight + 'px'});
-        director.attachInView($('#' + sceneName)[0]);
-        sceneList[sceneName] = cocos.nodes.Scene.create();
-        sceneListCount++;
-        //$('.currentS1cene', testArea).remove();
-    };
-    
-    that.showScene = function(sceneName, callback) {
-        //director.set('displayFPS', true);
-        var director = cocos.Director.get('sharedDirector'),
-            label = cocos.nodes.Label.create({string: sceneName, fontName: 'Arial', fontSize: 24}),
-            i;
-        label.set('position', geo.ccp(100, 100));
-        
-        currentScene = sceneList[sceneName];
-        currentSceneName = sceneName;
-        currentScene.addChild({child: engineTest.create()});
-        currentScene.addChild({child: currentMap, z: 0, tag: 1});
-        currentScene.addChild({child: label, z: 2});
-        
+        var scene = '',
+            i,
+            viewLayer;
+        scene = cocos.nodes.Scene.create();
+        sceneList[sceneName] = scene;
+        that.createViewIn(sceneName);
+        viewLayer = scene.views.mainView;
+        viewLayer.addChild({child: currentMap, z: 0, tag: 1});
         if (that.worldData !== undefined) {
             for (i = 0; i < that.worldData.length; i++) {
-                currentScene.addChild({child: that.worldData[i]});
+                viewLayer.addChild({child: that.worldData[i]});
             }
             that.worldData = undefined;
         }
-        if (sceneListCount > 1) {
-            $('.scene', testArea).not('#' + sceneName).remove();
+    };
+    
+    that.showScene = function(sceneName, callback) {
+        currentScene = sceneList[sceneName];
+        currentSceneName = sceneName;
+        if (isRunning) {
             director.replaceScene(currentScene);
         } else {
             director.runWithScene(currentScene);
+            isRunning = true;
         }
         if (typeof callback === 'function') {
             callback();
@@ -200,8 +208,8 @@ var engine = (function() {
         // Prepare one sprite
         sprite = cocos.nodes.Sprite.create({frame: spriteFrames[0]});
         sprite.set('position', geo.ccp(xPos * tileSize + tileCenterOffset, yPos * tileSize + tileCenterOffset));
-        currentScene.addChild({child: sprite});
-        
+        currentScene.views['mainView'].addChild({child: sprite});
+
         sprite.moveTo = function(x, y, duration, callback) {
             var position = geo.ccp(x * tileSize + tileCenterOffset, y * tileSize + tileCenterOffset),
                 moveAction = moveToWithStop.create({duration: (duration / 1000), position: position});
@@ -234,7 +242,7 @@ var engine = (function() {
         // Prepare one sprite
         sprite = cocos.nodes.Sprite.create({frame: spriteFrame});
         sprite.set('position', geo.ccp(xPos * tileSize + tileCenterOffsetX, yPos * tileSize + tileCenterOffsetY));
-        currentScene.addChild({child: sprite});
+        currentScene.views['mainView'].addChild({child: sprite});
         
         sprite.moveTo = function(x, y, duration, callback) {
             var position = geo.ccp(x * tileSize + tileCenterOffsetX, y * tileSize + tileCenterOffsetY),
@@ -267,7 +275,7 @@ var engine = (function() {
         };
         
         sprite.setZ = function(z) {
-            currentScene.reorderChild({child: sprite, z: z});
+            currentScene.view['mainView'].reorderChild({child: sprite, z: z});
         };
         
         return sprite;
