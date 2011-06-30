@@ -416,7 +416,7 @@ q.asyncTest('Show texts in canvas', 2, function() {
 	        	q.ok((stopTime.getTime() - startTime.getTime()) < 250, 'Render time: ' + (stopTime.getTime() - startTime.getTime()));
 	        	setTimeout(function(){
 		        	var pixelDataPattern = getFixtureToPutTextInCanvas();
-		        	var pixelData =	getImageDataFromCanvas('#sampleText > canvas', pixelDataPattern.imageSize.width, pixelDataPattern.imageSize.height);
+		        	var pixelData =	getImageDataFromCanvas('#qunit-test-area > canvas', pixelDataPattern.imageSize.width, pixelDataPattern.imageSize.height);
 		        	//if you need to generate new fixture for new browser  uncomment this function
 		        	//prepareFixtureFromImageData(pixelData,'#sampleText');
 		        	var properRenderStatus = true;
